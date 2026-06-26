@@ -16,5 +16,15 @@ const CONFIG = {
 
   // Đường dẫn 2 file PDF hướng dẫn (đặt file vào thư mục docs/ rồi đổi tên cho khớp)
   GUIDE_USED_BEFORE: 'docs/huong-dan-da-su-dung.pdf',
-  GUIDE_NOT_USED_BEFORE: 'docs/huong-dan-chua-su-dung.pdf'
+  GUIDE_NOT_USED_BEFORE: 'docs/huong-dan-chua-su-dung.pdf',
+
+  // Link Google Sheet để người dùng xem kết quả sau khi xử lý xong
+  RESULT_SHEET_URL: 'https://docs.google.com/spreadsheets/d/1a7rzk2j_Zw2qxrg78O70sYBTAZnvMRjDUsZ5NZI1SvM/edit?usp=sharing',
+
+  // Giá trị trạng thái coi là "đã xử lý xong" (phải khớp đúng chữ trong dropdown cột B)
+  STATUS_DONE_VALUE: 'Hoàn thành',
+
+  // Polling: cứ bao nhiêu giây hỏi lại trạng thái 1 lần, và tối đa chờ bao lâu thì dừng
+  POLL_INTERVAL_SECONDS: 5,
+  POLL_TIMEOUT_MINUTES: 10
 };
