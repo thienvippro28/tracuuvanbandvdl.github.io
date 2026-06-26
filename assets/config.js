@@ -9,7 +9,7 @@
 // ============================================================
 
 const CONFIG = {
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbz8vBdSn9DC5q85wrFD68QhRMIVfKVOnXkUk4Hz-2f2IPa869dMHyhpXLahCzYfDgy4/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwD4mUn5KDC368AIJZhcYNsHKGXT6bL0fQjaxqxs7qrBj89VL5PXz1X_s_Kluh8k8aU/exec',
 
   // Giới hạn dung lượng file PDF (MB) - chặn ở phía trình duyệt trước khi gửi đi
   MAX_FILE_SIZE_MB: 25,
