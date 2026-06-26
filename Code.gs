@@ -22,6 +22,7 @@ const DRIVE_FOLDER_ID = '1v7wU6w3rUr5nyWoC6bGeahSDCx6E1hvV';
 const SHEET_ID = '1a7rzk2j_Zw2qxrg78O70sYBTAZnvMRjDUsZ5NZI1SvM';
 const SHEET_NAME = 'Link Văn Bản (Người dùng nhập link Drive vào)';
 const STATUS_VALUE = 'Mới'; // giá trị dropdown mặc định khi mới nhận file
+const STATUS_DONE_VALUE = 'Hoàn thành'; // giá trị dropdown khi xử lý xong, web sẽ chờ tới khi thấy giá trị này
 const STATUS_COLUMN = 2; // cột B
 const LINK_COLUMN = 1; // cột A
 
@@ -114,10 +115,47 @@ function appendLinkToSheet(fileUrl) {
 }
 
 /**
- * Cho phép kiểm tra nhanh server còn sống không (gọi GET trên URL Web App).
+ * doGet hỗ trợ 2 việc:
+ * 1. Không có param gì -> kiểm tra nhanh server còn sống không.
+ * 2. ?action=checkStatus&row=<số dòng> -> trả về giá trị hiện tại của cột B
+ *    (Trạng Thái) tại dòng đó, để frontend polling chờ tới khi "Hoàn thành".
  */
 function doGet(e) {
+  const action = e && e.parameter ? e.parameter.action : null;
+
+  if (action === 'checkStatus') {
+    return handleCheckStatus(e);
+  }
+
   return jsonResponse({ success: true, message: 'Apps Script Web App đang hoạt động.' });
+}
+
+/**
+ * Đọc giá trị cột B (Trạng Thái) tại dòng được hỏi, trả về cho frontend.
+ */
+function handleCheckStatus(e) {
+  try {
+    const row = parseInt(e.parameter.row, 10);
+    if (!row || row < 2) {
+      return jsonResponse({ success: false, error: 'Số dòng không hợp lệ.' });
+    }
+
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sheet = ss.getSheetByName(SHEET_NAME);
+    if (!sheet) {
+      return jsonResponse({ success: false, error: 'Không tìm thấy sheet tên: ' + SHEET_NAME });
+    }
+
+    const status = sheet.getRange(row, STATUS_COLUMN).getValue();
+
+    return jsonResponse({
+      success: true,
+      row: row,
+      status: status ? status.toString() : ''
+    });
+  } catch (err) {
+    return jsonResponse({ success: false, error: err.message || String(err) });
+  }
 }
 
 function jsonResponse(obj) {
