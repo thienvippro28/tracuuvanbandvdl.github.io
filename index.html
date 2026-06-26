@@ -268,6 +268,15 @@
   .status-line.ok{color:var(--teal);}
   .status-line.err{color:var(--danger);}
 
+  .waiting-dot{
+    color:var(--amber);
+    animation:pulse-wait 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse-wait{
+    0%, 100%{opacity:0.55;}
+    50%{opacity:1;}
+  }
+
   .result-link{
     display:block;
     margin-top:8px;
