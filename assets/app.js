@@ -14,6 +14,7 @@
   const guideNotUsed = document.getElementById('guideNotUsed');
 
   let selectedFile = null;
+  let pollTimer = null;
 
   // ============ Guide links (Mục 02) ============
   guideUsed.href = CONFIG.GUIDE_USED_BEFORE;
@@ -63,6 +64,7 @@
       return;
     }
 
+    stopPolling();
     selectedFile = file;
     setStatus('', '');
 
@@ -103,8 +105,11 @@
       .then(function (data) {
         scanTrack.classList.remove('active');
         if (data && data.success) {
+          // Giai đoạn 1: upload xong
           setStatus('Đã gửi thành công. Văn bản đã được đưa vào hàng chờ xử lý.', 'ok');
           resetUploadBox();
+          // Bắt đầu chờ tới khi cột B chuyển thành "Hoàn thành"
+          startPolling(data.row);
         } else {
           setStatus('Gửi không thành công: ' + (data && data.error ? data.error : 'lỗi không xác định.'), 'err');
           sendBtn.disabled = false;
@@ -116,6 +121,71 @@
         sendBtn.disabled = false;
       });
   });
+
+  // ============ Polling trạng thái cột B ============
+  function startPolling(row) {
+    if (!row) return;
+
+    stopPolling();
+
+    const intervalMs = (CONFIG.POLL_INTERVAL_SECONDS || 5) * 1000;
+    const timeoutMs = (CONFIG.POLL_TIMEOUT_MINUTES || 10) * 60 * 1000;
+    const startedAt = Date.now();
+    const doneValue = (CONFIG.STATUS_DONE_VALUE || 'Hoàn thành').trim();
+
+    // Giai đoạn 2: thông báo đang chờ xử lý
+    appendWaitingMessage();
+
+    pollTimer = setInterval(function () {
+      if (Date.now() - startedAt > timeoutMs) {
+        stopPolling();
+        setStatus(
+          'Đã gửi văn bản nhưng việc xử lý đang lâu hơn dự kiến. Vui lòng vào Sheet kết quả để kiểm tra trực tiếp: ' + CONFIG.RESULT_SHEET_URL,
+          'err'
+        );
+        return;
+      }
+
+      checkStatus(row)
+        .then(function (data) {
+          if (!data || !data.success) return; // bỏ qua lỗi tạm thời, thử lại lượt sau
+          const current = (data.status || '').trim();
+          if (current === doneValue) {
+            stopPolling();
+            showDoneMessage();
+          }
+        })
+        .catch(function () {
+          // lỗi mạng tạm thời -> bỏ qua, sẽ thử lại ở lượt poll kế tiếp
+        });
+    }, intervalMs);
+  }
+
+  function stopPolling() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  }
+
+  function checkStatus(row) {
+    const url = CONFIG.APPS_SCRIPT_URL + '?action=checkStatus&row=' + encodeURIComponent(row);
+    return fetch(url).then(function (res) { return res.json(); });
+  }
+
+  function appendWaitingMessage() {
+    statusLine.innerHTML =
+      '<span class="ok">Đã gửi thành công. Văn bản đã được đưa vào hàng chờ xử lý.</span><br>' +
+      '<span class="waiting-dot">Chờ trong ít phút...</span>';
+    statusLine.classList.remove('err');
+  }
+
+  function showDoneMessage() {
+    statusLine.innerHTML =
+      '<span class="ok">Đã xử lý hoàn tất. Vui lòng vào đường link này để xem nội dung kết quả:</span><br>' +
+      '<a class="result-link" href="' + CONFIG.RESULT_SHEET_URL + '" target="_blank" rel="noopener">' +
+      CONFIG.RESULT_SHEET_URL + '</a>';
+  }
 
   function resetUploadBox() {
     selectedFile = null;
