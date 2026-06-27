@@ -15,7 +15,7 @@ const CONFIG = {
   MAX_FILE_SIZE_MB: 25,
 
   // Link Google Sheet để người dùng xem kết quả sau khi xử lý xong
-  RESULT_SHEET_URL: 'https://docs.google.com/spreadsheets/d/1a7rzk2j_Zw2qxrg78O70sYBTAZnvMRjDUsZ5NZI1SvM/edit?usp=sharing',
+  RESULT_SHEET_URL: 'https://docs.google.com/spreadsheets/d/1a7rzk2j_Zw2qxrg78O70sYBTAZnvMRjDUsZ5NZI1SvM/edit?gid=0#gid=0',
 
   // Giá trị trạng thái coi là "đã xử lý xong" (phải khớp đúng chữ trong dropdown cột B)
   STATUS_DONE_VALUE: 'Hoàn thành',
