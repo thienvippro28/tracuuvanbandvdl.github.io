@@ -22,5 +22,5 @@ const CONFIG = {
 
   // Polling: cứ bao nhiêu giây hỏi lại trạng thái 1 lần, và tối đa chờ bao lâu thì dừng
   POLL_INTERVAL_SECONDS: 5,
-  POLL_TIMEOUT_MINUTES: 10
+  POLL_TIMEOUT_MINUTES: 25
 };
