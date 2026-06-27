@@ -85,35 +85,45 @@
       return;
     }
 
+    const fileBeingSent = selectedFile;
     sendBtn.disabled = true;
     scanTrack.classList.add('active');
     setStatus('Đang tải file lên...', '');
 
-    fileToBase64(selectedFile)
-      .then(function (base64) {
-        return fetch(CONFIG.APPS_SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            fileBase64: base64,
-            fileName: selectedFile.name,
-            mimeType: selectedFile.type || 'application/pdf'
-          })
+    // BƯỚC 1: hỏi trước dòng trống kế tiếp bằng GET JSON bình thường.
+    getNextRow()
+      .then(function (rowData) {
+        if (!rowData || !rowData.success) {
+          throw new Error(rowData && rowData.error ? rowData.error : 'Không lấy được số dòng kế tiếp.');
+        }
+        const expectedRow = rowData.row;
+
+        // BƯỚC 2: gửi file bằng no-cors. Apps Script Web App trả response
+        // qua một redirect không có header CORS, nên fetch() ở mode 'cors'
+        // bình thường sẽ bị trình duyệt chặn và báo lỗi "Failed to fetch"
+        // dù server đã nhận và xử lý đúng. Dùng 'no-cors' để request luôn
+        // được gửi đi; đổi lại không đọc được response trực tiếp nên xác
+        // minh kết quả thật bằng polling ngay sau đây.
+        return fileToBase64(fileBeingSent).then(function (base64) {
+          return fetch(CONFIG.APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              fileBase64: base64,
+              fileName: fileBeingSent.name,
+              mimeType: fileBeingSent.type || 'application/pdf'
+            })
+          }).then(function () {
+            return expectedRow;
+          });
         });
       })
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
+      .then(function (expectedRow) {
         scanTrack.classList.remove('active');
-        if (data && data.success) {
-          // Giai đoạn 1: upload xong
-          setStatus('Đã gửi thành công. Văn bản đã được đưa vào hàng chờ xử lý.', 'ok');
-          resetUploadBox();
-          // Bắt đầu chờ tới khi cột B chuyển thành "Hoàn thành"
-          startPolling(data.row);
-        } else {
-          setStatus('Gửi không thành công: ' + (data && data.error ? data.error : 'lỗi không xác định.'), 'err');
-          sendBtn.disabled = false;
-        }
+        setStatus('Đã gửi thành công. Văn bản đã được đưa vào hàng chờ xử lý.', 'ok');
+        resetUploadBox();
+        startPolling(expectedRow);
       })
       .catch(function (err) {
         scanTrack.classList.remove('active');
@@ -122,9 +132,17 @@
       });
   });
 
+  function getNextRow() {
+    const url = CONFIG.APPS_SCRIPT_URL + '?action=getNextRow';
+    return fetch(url).then(function (res) { return res.json(); });
+  }
+
   // ============ Polling trạng thái cột B ============
-  function startPolling(row) {
-    if (!row) return;
+  // Polling vừa xác nhận việc ghi đã thật sự xảy ra (cột A có link, không còn
+  // trống), vừa chờ tới khi cột B = "Hoàn thành". Vì POST dùng no-cors nên
+  // đây là cách duy nhất để biết chắc upload có thành công hay không.
+  function startPolling(expectedRow) {
+    if (!expectedRow) return;
 
     stopPolling();
 
@@ -133,7 +151,9 @@
     const startedAt = Date.now();
     const doneValue = (CONFIG.STATUS_DONE_VALUE || 'Hoàn thành').trim();
 
-    // Giai đoạn 2: thông báo đang chờ xử lý
+    let currentRow = expectedRow;
+    let sawLinkWritten = false; // đã thấy cột A có dữ liệu ở dòng đang theo dõi chưa
+
     appendWaitingMessage();
 
     pollTimer = setInterval(function () {
@@ -146,9 +166,21 @@
         return;
       }
 
-      checkStatus(row)
+      checkStatus(currentRow)
         .then(function (data) {
-          if (!data || !data.success) return; // bỏ qua lỗi tạm thời, thử lại lượt sau
+          if (!data || !data.success) return; // lỗi tạm thời, thử lại lượt sau
+
+          if (!sawLinkWritten) {
+            if (data.link && data.link.trim() !== '') {
+              sawLinkWritten = true;
+            } else {
+              // Dòng đoán trước vẫn trống -> có thể có người khác vừa ghi
+              // chen vào trước, dò thêm 1 dòng kế tiếp ở lượt poll sau.
+              currentRow = currentRow + 1;
+              return;
+            }
+          }
+
           const current = (data.status || '').trim();
           if (current === doneValue) {
             stopPolling();
@@ -205,7 +237,6 @@
     return new Promise(function (resolve, reject) {
       const reader = new FileReader();
       reader.onload = function () {
-        // result dạng "data:application/pdf;base64,XXXXX" -> chỉ lấy phần sau dấu phẩy
         const result = reader.result;
         const base64 = result.substring(result.indexOf(',') + 1);
         resolve(base64);

@@ -81,16 +81,39 @@ function doPost(e) {
  * Trả về số dòng vừa ghi.
  */
 function appendLinkToSheet(fileUrl) {
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-  const sheet = ss.getSheetByName(SHEET_NAME);
-  if (!sheet) {
-    throw new Error('Không tìm thấy sheet tên: ' + SHEET_NAME);
-  }
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000); // chờ tối đa 20s nếu có request khác đang ghi
 
+  try {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sheet = ss.getSheetByName(SHEET_NAME);
+    if (!sheet) {
+      throw new Error('Không tìm thấy sheet tên: ' + SHEET_NAME);
+    }
+
+    const targetRow = findNextEmptyRow(sheet);
+
+    // Ghi cột A = link
+    sheet.getRange(targetRow, LINK_COLUMN).setValue(fileUrl);
+
+    // Ghi cột B = "Mới" (giữ đúng giá trị dropdown đã thiết lập sẵn bằng Data Validation)
+    sheet.getRange(targetRow, STATUS_COLUMN).setValue(STATUS_VALUE);
+
+    return targetRow;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Tìm dòng trống đầu tiên ở cột A (bắt đầu từ dòng 2, sau header).
+ * Dùng chung cho cả việc ghi thật (appendLinkToSheet) và đoán trước
+ * (handleGetNextRow) để 2 nơi luôn nhất quán cùng 1 logic.
+ */
+function findNextEmptyRow(sheet) {
   const lastRow = sheet.getLastRow();
   const colAValues = sheet.getRange(1, LINK_COLUMN, Math.max(lastRow, 1), 1).getValues();
 
-  // Tìm dòng trống đầu tiên ở cột A (bắt đầu từ dòng 2, sau header)
   let targetRow = -1;
   for (let i = 1; i < colAValues.length; i++) { // i=1 -> dòng 2 (bỏ header dòng 1)
     if (!colAValues[i][0] || colAValues[i][0].toString().trim() === '') {
@@ -104,13 +127,6 @@ function appendLinkToSheet(fileUrl) {
   if (targetRow < 2) {
     targetRow = 2; // tối thiểu là dòng 2 (dòng 1 là header)
   }
-
-  // Ghi cột A = link
-  sheet.getRange(targetRow, LINK_COLUMN).setValue(fileUrl);
-
-  // Ghi cột B = "Mới" (giữ đúng giá trị dropdown đã thiết lập sẵn bằng Data Validation)
-  sheet.getRange(targetRow, STATUS_COLUMN).setValue(STATUS_VALUE);
-
   return targetRow;
 }
 
@@ -126,12 +142,37 @@ function doGet(e) {
   if (action === 'checkStatus') {
     return handleCheckStatus(e);
   }
+  if (action === 'getNextRow') {
+    return handleGetNextRow(e);
+  }
 
   return jsonResponse({ success: true, message: 'Apps Script Web App đang hoạt động.' });
 }
 
 /**
- * Đọc giá trị cột B (Trạng Thái) tại dòng được hỏi, trả về cho frontend.
+ * Trả về số dòng trống kế tiếp ở cột A, KHÔNG ghi gì cả — chỉ để frontend
+ * biết trước nó sẽ rơi vào dòng nào, trước khi POST file lên bằng no-cors
+ * (no-cors không cho đọc response của POST, nên phải biết trước số dòng
+ * bằng một lượt GET riêng).
+ */
+function handleGetNextRow(e) {
+  try {
+    const ss = SpreadsheetApp.openById(SHEET_ID);
+    const sheet = ss.getSheetByName(SHEET_NAME);
+    if (!sheet) {
+      return jsonResponse({ success: false, error: 'Không tìm thấy sheet tên: ' + SHEET_NAME });
+    }
+    const row = findNextEmptyRow(sheet);
+    return jsonResponse({ success: true, row: row });
+  } catch (err) {
+    return jsonResponse({ success: false, error: err.message || String(err) });
+  }
+}
+
+/**
+ * Đọc giá trị cột A (link) và cột B (Trạng Thái) tại dòng được hỏi.
+ * Trả thêm cột A để frontend tự xác minh đúng dòng (phòng trường hợp hiếm
+ * có 2 người gửi cùng lúc khiến số dòng đoán trước bị lệch 1 dòng).
  */
 function handleCheckStatus(e) {
   try {
@@ -146,11 +187,13 @@ function handleCheckStatus(e) {
       return jsonResponse({ success: false, error: 'Không tìm thấy sheet tên: ' + SHEET_NAME });
     }
 
+    const link = sheet.getRange(row, LINK_COLUMN).getValue();
     const status = sheet.getRange(row, STATUS_COLUMN).getValue();
 
     return jsonResponse({
       success: true,
       row: row,
+      link: link ? link.toString() : '',
       status: status ? status.toString() : ''
     });
   } catch (err) {
