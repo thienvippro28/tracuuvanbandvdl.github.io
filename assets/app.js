@@ -22,8 +22,8 @@
   guideToggle.addEventListener('click', function () {
     guideSub.classList.toggle('open');
     guideToggle.textContent = guideSub.classList.contains('open')
-      ? 'Ẩn tài liệu hướng dẫn'
-      : 'Xem tài liệu hướng dẫn';
+      ? 'Ẩn các phương án'
+      : 'Xem phương án chi tiết';
   });
 
   btnHasFriend.addEventListener('click', function () {
