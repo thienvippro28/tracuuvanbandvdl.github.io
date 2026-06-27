@@ -14,10 +14,6 @@ const CONFIG = {
   // Giới hạn dung lượng file PDF (MB) - chặn ở phía trình duyệt trước khi gửi đi
   MAX_FILE_SIZE_MB: 25,
 
-  // Đường dẫn 2 file PDF hướng dẫn (đặt file vào thư mục docs/ rồi đổi tên cho khớp)
-  GUIDE_USED_BEFORE: 'docs/huong-dan-da-su-dung.pdf',
-  GUIDE_NOT_USED_BEFORE: 'docs/huong-dan-chua-su-dung.pdf',
-
   // Link Google Sheet để người dùng xem kết quả sau khi xử lý xong
   RESULT_SHEET_URL: 'https://docs.google.com/spreadsheets/d/1a7rzk2j_Zw2qxrg78O70sYBTAZnvMRjDUsZ5NZI1SvM/edit?usp=sharing',
 

@@ -290,7 +290,7 @@
   /* ===== GUIDE SUB-BUTTONS ===== */
   .sub-buttons{
     display:none;
-    flex-direction:column;
+    flex-direction:row;
     gap:10px;
     margin-top:18px;
     padding-top:18px;
@@ -319,7 +319,150 @@
   }
   .sub-btn .arrow{color:var(--amber); font-size:16px;}
 
-  /* ===== FOOTER NOTE ===== */
+  /* ===== FRIEND STATUS BUTTONS (Đã/Chưa kết bạn) ===== */
+  .friend-btn{
+    appearance:none;
+    cursor:pointer;
+    font-family:var(--font-body);
+    font-weight:700;
+    font-size:13px;
+    line-height:1.35;
+    text-align:center;
+    border-radius:var(--radius-sm);
+    padding:16px 14px;
+    background:rgba(255,255,255,0.02);
+    transition:transform 0.15s ease, background 0.2s ease;
+    flex:1;
+  }
+  .friend-btn:active{transform:scale(0.98);}
+  .friend-btn-yes{
+    border:1.5px solid #1f9d72;
+    color:#3DDC97;
+  }
+  .friend-btn-yes:hover{background:rgba(61,220,151,0.08);}
+  .friend-btn-no{
+    border:1.5px solid #c14942;
+    color:#F4615C;
+  }
+  .friend-btn-no:hover{background:rgba(244,97,92,0.08);}
+  .friend-sub{
+    display:inline-block;
+    font-weight:600;
+    font-size:11.5px;
+    opacity:0.85;
+    margin-top:2px;
+  }
+
+  /* ===== MODAL ===== */
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(5,9,18,0.72);
+    backdrop-filter:blur(3px);
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    z-index:100;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:32px;
+    max-width:420px;
+    width:100%;
+    max-height:88vh;
+    overflow-y:auto;
+    position:relative;
+    text-align:center;
+    box-shadow:0 24px 60px rgba(0,0,0,0.5);
+  }
+  .modal-box-wide{
+    max-width:620px;
+    text-align:left;
+  }
+  .modal-close{
+    position:absolute;
+    top:14px; right:16px;
+    background:none;
+    border:none;
+    color:var(--text-dim);
+    font-size:24px;
+    line-height:1;
+    cursor:pointer;
+    padding:4px;
+  }
+  .modal-close:hover{color:var(--text);}
+  .modal-label{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    color:var(--teal);
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  .modal-box h3{
+    font-family:var(--font-display);
+    font-size:19px;
+    font-weight:700;
+    margin:0 0 18px;
+  }
+  .modal-qr{
+    width:220px;
+    max-width:100%;
+    border-radius:12px;
+    margin:0 auto 16px;
+    display:block;
+    background:#fff;
+    padding:8px;
+  }
+  .modal-qr-small{
+    width:150px;
+    margin:10px 0 0;
+  }
+  .modal-caption{
+    color:var(--text-dim);
+    font-size:13.5px;
+    margin:0;
+  }
+
+  .guide-steps{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .guide-step{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+  }
+  .guide-step-num{
+    flex-shrink:0;
+    width:26px; height:26px;
+    border-radius:50%;
+    background:rgba(45,212,191,0.12);
+    color:var(--teal);
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:1px;
+  }
+  .guide-step-body p{
+    margin:0;
+    font-size:14px;
+    color:var(--text);
+    line-height:1.55;
+  }
+  .guide-step-body strong{color:var(--teal);}
+
+  @media (max-width:600px){
+    .sub-buttons{flex-direction:column;}
+  }
   .note{
     background:var(--card);
     border:1px solid var(--card-border);
@@ -374,7 +517,7 @@
       <div class="status-line" id="statusLine"></div>
     </div>
 
-    <!-- ============ STATION 2: GUIDE ============ -->
+    <!-- ============ STATION 2: ZALO BOT ============ -->
     <div class="station amber">
       <div class="station-label">Cách thực hiện thứ 2: Zalo Bot</div>
       <h2>Tài liệu hướng dẫn sử dụng</h2>
@@ -383,22 +526,77 @@
       <button class="btn btn-secondary" id="guideToggle">Xem tài liệu hướng dẫn</button>
 
       <div class="sub-buttons" id="guideSub">
-        <a class="sub-btn" id="guideUsed" href="#" target="_blank" rel="noopener">
-          <span>Đã từng sử dụng Bot Tra cứu văn bản<br><span class="tag">Hướng dẫn dùng kênh gửi mới này</span></span>
-          <span class="arrow">↗</span>
-        </a>
-        <a class="sub-btn" id="guideNotUsed" href="#" target="_blank" rel="noopener">
-          <span>Chưa từng sử dụng Bot Tra cứu văn bản<br><span class="tag">Hướng dẫn từ đầu, đầy đủ các bước</span></span>
-          <span class="arrow">↗</span>
-        </a>
+        <button class="friend-btn friend-btn-yes" id="btnHasFriend" type="button">
+          ĐÃ KẾT BẠN<br>VỚI BOT TRA<br>CỨU VĂN BẢN<br><span class="friend-sub">(AI VĂN BẢN)</span>
+        </button>
+        <button class="friend-btn friend-btn-no" id="btnNoFriend" type="button">
+          CHƯA KẾT BẠN<br>VỚI BOT TRA<br>CỨU VĂN BẢN<br><span class="friend-sub">(AI VĂN BẢN)</span>
+        </button>
       </div>
     </div>
 
   </section>
 
+  <!-- ============ MODAL: ĐÃ KẾT BẠN -> QR GỬI FILE ============ -->
+  <div class="modal-overlay" id="modalHasFriend">
+    <div class="modal-box">
+      <button class="modal-close" data-close>&times;</button>
+      <div class="modal-label">Gửi file vào Zalo Bot</div>
+      <h3>Quét mã QR để gửi file</h3>
+      <img class="modal-qr" src="assets/images/qr-bot.png" alt="QR quét để gửi file vào Zalo Bot" />
+      <p class="modal-caption">
+        Mở Zalo trên điện thoại → quét mã QR này → gửi trực tiếp file PDF cần tra cứu
+        vào khung chat với Bot "Ai Văn Bản".
+      </p>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: CHƯA KẾT BẠN -> HƯỚNG DẪN ĐẦY ĐỦ ============ -->
+  <div class="modal-overlay" id="modalNoFriend">
+    <div class="modal-box modal-box-wide">
+      <button class="modal-close" data-close>&times;</button>
+      <div class="modal-label">Hướng dẫn sử dụng từ đầu</div>
+      <h3>Các bước kết bạn và gửi văn bản qua Zalo Bot</h3>
+
+      <div class="guide-steps">
+        <div class="guide-step">
+          <div class="guide-step-num">1</div>
+          <div class="guide-step-body">
+            <p><strong>Quét mã QR để tham gia nhóm Zalo</strong> bên dưới bằng ứng dụng Zalo trên điện thoại.</p>
+            <img class="modal-qr modal-qr-small" src="assets/images/qr-nhom-zalo.png" alt="QR tham gia nhóm Zalo" />
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="guide-step-num">2</div>
+          <div class="guide-step-body">
+            <p>Sau khi vào nhóm, Chatbot <strong>"Ai Văn Bản"</strong> sẽ gửi lời mời kết bạn. Bấm <strong>"Đồng ý"</strong> để kết bạn và kích hoạt gói dùng thử.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="guide-step-num">3</div>
+          <div class="guide-step-body">
+            <p>Chuẩn bị văn bản/tài liệu cần tra cứu dưới định dạng <strong>PDF</strong>.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="guide-step-num">4</div>
+          <div class="guide-step-body">
+            <p>Gửi tệp tài liệu lên khung nhắn tin của chatbot <strong>"Ai Văn Bản"</strong> và chờ hệ thống tự động xử lý (thời gian xử lý tùy theo số lượng căn cứ pháp lý có trong văn bản).</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="guide-step-num">5</div>
+          <div class="guide-step-body">
+            <p>Khi xử lý xong, Bot sẽ trả kết quả tổng quát ngay trong khung chat Zalo, kèm đường link để xem chi tiết toàn bộ căn cứ pháp lý liên quan.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="note">
-    <strong>Lưu ý:</strong> File sau khi gửi sẽ được chia sẻ ở chế độ "Bất kỳ ai có link đều xem được"
-    và đưa vào hàng chờ xử lý giống như khi gửi qua Zalo. Chỉ nhận file định dạng PDF.
+    <strong>Lưu ý:</strong> File đưa vào hàng chờ sẽ tốn 1 khoảng thời gian xử lý.
+    (tùy theo văn bản có nhiều hoặc ít viện dẫn căn cứ)
   </div>
 
   <footer>

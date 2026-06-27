@@ -10,22 +10,54 @@
 
   const guideToggle = document.getElementById('guideToggle');
   const guideSub = document.getElementById('guideSub');
-  const guideUsed = document.getElementById('guideUsed');
-  const guideNotUsed = document.getElementById('guideNotUsed');
+  const btnHasFriend = document.getElementById('btnHasFriend');
+  const btnNoFriend = document.getElementById('btnNoFriend');
+  const modalHasFriend = document.getElementById('modalHasFriend');
+  const modalNoFriend = document.getElementById('modalNoFriend');
 
   let selectedFile = null;
   let pollTimer = null;
 
-  // ============ Guide links (Mục 02) ============
-  guideUsed.href = CONFIG.GUIDE_USED_BEFORE;
-  guideNotUsed.href = CONFIG.GUIDE_NOT_USED_BEFORE;
-
+  // ============ Guide toggle + modals (Mục 02) ============
   guideToggle.addEventListener('click', function () {
     guideSub.classList.toggle('open');
     guideToggle.textContent = guideSub.classList.contains('open')
       ? 'Ẩn tài liệu hướng dẫn'
       : 'Xem tài liệu hướng dẫn';
   });
+
+  btnHasFriend.addEventListener('click', function () {
+    openModal(modalHasFriend);
+  });
+  btnNoFriend.addEventListener('click', function () {
+    openModal(modalNoFriend);
+  });
+
+  document.querySelectorAll('.modal-overlay').forEach(function (overlay) {
+    // đóng khi bấm nút X
+    overlay.querySelectorAll('[data-close]').forEach(function (btn) {
+      btn.addEventListener('click', function () { closeModal(overlay); });
+    });
+    // đóng khi bấm ra ngoài modal-box
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) closeModal(overlay);
+    });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.open').forEach(closeModal);
+    }
+  });
+
+  function openModal(overlay) {
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(overlay) {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
 
   // ============ Upload box interactions ============
   uploadBox.addEventListener('click', function () {
